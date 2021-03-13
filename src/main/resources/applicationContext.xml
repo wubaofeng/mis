@@ -1,0 +1,71 @@
+<beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx" xsi:schemaLocation="
+	http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.1.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.1.xsd http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.1.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.1.xsd ">
+    <!-- 实体类扫描 -->
+    <context:component-scan base-package="me.wbf.mis">
+        <!-- 忽略@Controller注解 -->
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+    </context:component-scan>
+    <!-- 配置数据源 -->
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql://123.57.210.195:3307/prometion"/>
+        <property name="username" value="root"/>
+        <property name="password" value="123xyz"/>
+    </bean>
+
+    <!-- 使用Spring创建sqlSessionFactory -->
+    <bean id="sqlSessionFactoryBean" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!-- 数据源 -->
+        <property name="dataSource" ref="dataSource"/>
+        <!-- 别名 -->
+        <property name="typeAliasesPackage" value="me.wbf.mis.entity"/>
+        <!--配置分页创建pagehelper-->
+        <property name="plugins">
+            <array>
+                <bean class="com.github.pagehelper.PageInterceptor">
+                    <property name="properties">
+                        <value>
+                            helperDialect=MySQL
+                        </value>
+                    </property>
+                </bean>
+            </array>
+        </property>
+    </bean>
+    <!-- mapper管理 -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="me.wbf.mis.mapper"/>
+    </bean>
+
+    <!-- 事务管理平台 -->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <!-- 事务的增强方式 -->
+    <tx:advice id="txAdvice" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="add*"/>
+            <tx:method name="insert*"/>
+            <tx:method name="save*"/>
+            <tx:method name="edit*"/>
+            <tx:method name="update*"/>
+            <tx:method name="delete*"/>
+            <tx:method name="drop*"/>
+            <tx:method name="find*" read-only="true"/>
+            <tx:method name="get*" read-only="true"/>
+            <tx:method name="select*" read-only="true"/>
+            <tx:method name="list*" read-only="true"/>
+            <tx:method name="load*" read-only="true"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <!-- 使用Aop添加事务 -->
+    <aop:config>
+        <aop:advisor advice-ref="txAdvice" pointcut="execution( * me.wbf.mis.service..*Impl.*(..))"/>
+    </aop:config>
+</beans>
